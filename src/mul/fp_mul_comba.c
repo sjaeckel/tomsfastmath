@@ -148,7 +148,18 @@ asm(                                                     \
    x = c1;
 
 #define COMBA_FINI
-
+#if defined(TFM_ARM_V5TE)
+#define MULADD(i, j)                                          \
+asm(                                                          \
+" .ALIGN                        \n\t"                         \
+" .ARM                          \n\t"                         \
+"  UMULL  r0,r1,%6,%7           \n\t"                         \
+"  ADDS   %0,%0,r0              \n\t"                         \
+"  ADCS   %1,%1,r1              \n\t"                         \
+"  ADC    %2,%2,#0              \n\t"                         \
+" .THUMB                        \n\t"                         \
+:"=r"(c0), "=r"(c1), "=r"(c2) : "0"(c0), "1"(c1), "2"(c2), "r"(i), "r"(j) : "r0", "r1", "%cc");
+#else
 #define MULADD(i, j)                                          \
 asm(                                                          \
 "  UMULL  r0,r1,%6,%7           \n\t"                         \
@@ -156,7 +167,7 @@ asm(                                                          \
 "  ADCS   %1,%1,r1              \n\t"                         \
 "  ADC    %2,%2,#0              \n\t"                         \
 :"=r"(c0), "=r"(c1), "=r"(c2) : "0"(c0), "1"(c1), "2"(c2), "r"(i), "r"(j) : "r0", "r1", "%cc");
-
+#endif
 #elif defined(TFM_PPC32)
 /* For 32-bit PPC */
 

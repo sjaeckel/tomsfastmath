@@ -252,7 +252,19 @@ asm(                                                     \
    do { c0 = c1; c1 = c2; c2 = 0; } while (0);
 
 #define COMBA_FINI
-
+#if defined(TFM_ARM_V5TE)
+/* multiplies point i and j, updates carry "c1" and digit c2 */
+#define SQRADD(i, j)                                             \
+asm(                                                             \
+" .ALIGN                           \n\t"                         \
+" .ARM                             \n\t"                         \
+"  UMULL  r0,r1,%6,%6              \n\t"                         \
+"  ADDS   %0,%0,r0                 \n\t"                         \
+"  ADCS   %1,%1,r1                 \n\t"                         \
+"  ADC    %2,%2,#0                 \n\t"                         \
+" .THUMB                           \n\t"                         \
+:"=r"(c0), "=r"(c1), "=r"(c2) : "0"(c0), "1"(c1), "2"(c2), "r"(i) : "r0", "r1", "%cc");
+#else
 /* multiplies point i and j, updates carry "c1" and digit c2 */
 #define SQRADD(i, j)                                             \
 asm(                                                             \
@@ -261,7 +273,24 @@ asm(                                                             \
 "  ADCS   %1,%1,r1                 \n\t"                         \
 "  ADC    %2,%2,#0                 \n\t"                         \
 :"=r"(c0), "=r"(c1), "=r"(c2) : "0"(c0), "1"(c1), "2"(c2), "r"(i) : "r0", "r1", "%cc");
-	
+#endif
+
+#if defined(TFM_ARM_V5TE)
+/* for squaring some of the terms are doubled... */
+#define SQRADD2(i, j)                                            \
+asm(                                                             \
+" .ALIGN                           \n\t"                         \
+" .ARM                             \n\t"                         \
+"  UMULL  r0,r1,%6,%7              \n\t"                         \
+"  ADDS   %0,%0,r0                 \n\t"                         \
+"  ADCS   %1,%1,r1                 \n\t"                         \
+"  ADC    %2,%2,#0                 \n\t"                         \
+"  ADDS   %0,%0,r0                 \n\t"                         \
+"  ADCS   %1,%1,r1                 \n\t"                         \
+"  ADC    %2,%2,#0                 \n\t"                         \
+" .THUMB                           \n\t"                         \
+:"=r"(c0), "=r"(c1), "=r"(c2) : "0"(c0), "1"(c1), "2"(c2), "r"(i), "r"(j) : "r0", "r1", "%cc");
+#else
 /* for squaring some of the terms are doubled... */
 #define SQRADD2(i, j)                                            \
 asm(                                                             \
@@ -273,13 +302,37 @@ asm(                                                             \
 "  ADCS   %1,%1,r1                 \n\t"                         \
 "  ADC    %2,%2,#0                 \n\t"                         \
 :"=r"(c0), "=r"(c1), "=r"(c2) : "0"(c0), "1"(c1), "2"(c2), "r"(i), "r"(j) : "r0", "r1", "%cc");
+#endif
 
+#if defined(TFM_ARM_V5TE)
+#define SQRADDSC(i, j)                                           \
+asm(                                                             \
+" .ALIGN                           \n\t"                         \
+" .ARM                             \n\t"                         \
+"  UMULL  %0,%1,%6,%7              \n\t"                         \
+"  SUB    %2,%2,%2                 \n\t"                         \
+" .THUMB                           \n\t"                         \
+:"=r"(sc0), "=r"(sc1), "=r"(sc2) : "0"(sc0), "1"(sc1), "2"(sc2), "r"(i), "r"(j) : "%cc");
+#else
 #define SQRADDSC(i, j)                                           \
 asm(                                                             \
 "  UMULL  %0,%1,%6,%7              \n\t"                         \
 "  SUB    %2,%2,%2                 \n\t"                         \
 :"=r"(sc0), "=r"(sc1), "=r"(sc2) : "0"(sc0), "1"(sc1), "2"(sc2), "r"(i), "r"(j) : "%cc");
+#endif
 
+#if defined(TFM_ARM_V5TE)
+#define SQRADDAC(i, j)                                           \
+asm(                                                             \
+" .ALIGN                           \n\t"                         \
+" .ARM                             \n\t"                         \
+"  UMULL  r0,r1,%6,%7              \n\t"                         \
+"  ADDS   %0,%0,r0                 \n\t"                         \
+"  ADCS   %1,%1,r1                 \n\t"                         \
+"  ADC    %2,%2,#0                 \n\t"                         \
+" .THUMB                           \n\t"                         \
+:"=r"(sc0), "=r"(sc1), "=r"(sc2) : "0"(sc0), "1"(sc1), "2"(sc2), "r"(i), "r"(j) : "r0", "r1", "%cc");
+#else
 #define SQRADDAC(i, j)                                           \
 asm(                                                             \
 "  UMULL  r0,r1,%6,%7              \n\t"                         \
@@ -287,7 +340,22 @@ asm(                                                             \
 "  ADCS   %1,%1,r1                 \n\t"                         \
 "  ADC    %2,%2,#0                 \n\t"                         \
 :"=r"(sc0), "=r"(sc1), "=r"(sc2) : "0"(sc0), "1"(sc1), "2"(sc2), "r"(i), "r"(j) : "r0", "r1", "%cc");
+#endif
 
+#if defined(TFM_ARM_V5TE)
+#define SQRADDDB                                                 \
+asm(                                                             \
+" .ALIGN                              \n\t"                      \
+" .ARM                                \n\t"                      \
+"  ADDS  %0,%0,%3                     \n\t"                      \
+"  ADCS  %1,%1,%4                     \n\t"                      \
+"  ADC   %2,%2,%5                     \n\t"                      \
+"  ADDS  %0,%0,%3                     \n\t"                      \
+"  ADCS  %1,%1,%4                     \n\t"                      \
+"  ADC   %2,%2,%5                     \n\t"                      \
+" .THUMB                              \n\t"                      \
+:"=r"(c0), "=r"(c1), "=r"(c2) : "r"(sc0), "r"(sc1), "r"(sc2), "0"(c0), "1"(c1), "2"(c2) : "%cc");
+#else
 #define SQRADDDB                                                 \
 asm(                                                             \
 "  ADDS  %0,%0,%3                     \n\t"                      \
@@ -297,6 +365,7 @@ asm(                                                             \
 "  ADCS  %1,%1,%4                     \n\t"                      \
 "  ADC   %2,%2,%5                     \n\t"                      \
 :"=r"(c0), "=r"(c1), "=r"(c2) : "r"(sc0), "r"(sc1), "r"(sc2), "0"(c0), "1"(c1), "2"(c2) : "%cc");
+#endif
 
 #elif defined(TFM_PPC32)
 
